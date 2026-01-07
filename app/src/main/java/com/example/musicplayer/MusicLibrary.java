@@ -92,6 +92,17 @@ public class MusicLibrary {
         return artistSongs;
     }
 
+    public static List<Song> getSongsByGenre(String genre) {
+        List<Song> genreSongs = new ArrayList<>();
+        for (Song song : songList) {
+            // Case-insensitive check (e.g., "Rock" matches "rock")
+            if (song.getGenre().trim().equalsIgnoreCase(genre.trim())) {
+                genreSongs.add(song);
+            }
+        }
+        return genreSongs;
+    }
+
     public static List<String> getUniqueArtists() {
         Set<String> artists = new HashSet<>();
         for (Song song : songList) {

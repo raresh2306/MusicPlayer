@@ -16,7 +16,8 @@
         android:layout_height="280dp"
         android:src="@android:drawable/ic_menu_gallery"
         android:layout_marginBottom="30dp"
-        android:elevation="10dp"/>
+        android:elevation="10dp"
+        android:contentDescription="Album Art" />
 
     <TextView
         android:id="@+id/tvSongTitle"
@@ -41,13 +42,46 @@
         android:layout_marginBottom="30dp"
         tools:ignore="HardcodedText" />
 
-    <SeekBar
-        android:id="@+id/seekBar"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="30dp"
-        android:progressTint="#000000"
-        android:thumbTint="#000000"/>
+        android:orientation="vertical"
+        android:layout_marginBottom="30dp">
+
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:progressTint="#000000"
+            android:thumbTint="#000000"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+
+            <TextView
+                android:id="@+id/tvCurrentTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0:00"
+                android:textColor="#444444"
+                android:textSize="12sp"
+                android:layout_alignParentStart="true"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/tvTotalTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0:00"
+                android:textColor="#444444"
+                android:textSize="12sp"
+                android:layout_alignParentEnd="true"
+                tools:ignore="HardcodedText" />
+        </RelativeLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -60,10 +94,11 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_rotate"
+            android:src="@drawable/ic_shuffle_new"
             app:tint="#000000"
             android:scaleType="fitCenter"
-            android:alpha="0.5"/>
+            android:alpha="0.5"
+            android:contentDescription="Shuffle" />
 
         <ImageButton
             android:id="@+id/btnPrev"
@@ -73,7 +108,8 @@
             android:src="@android:drawable/ic_media_previous"
             app:tint="#000000"
             android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"/>
+            android:layout_marginEnd="10dp"
+            android:contentDescription="Previous" />
 
         <ImageButton
             android:id="@+id/btnPlayPause"
@@ -82,7 +118,8 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_play"
             app:tint="#000000"
-            android:scaleType="fitCenter"/>
+            android:scaleType="fitCenter"
+            android:contentDescription="Play Pause" />
 
         <ImageButton
             android:id="@+id/btnNext"
@@ -92,17 +129,19 @@
             android:src="@android:drawable/ic_media_next"
             app:tint="#000000"
             android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"/>
+            android:layout_marginEnd="10dp"
+            android:contentDescription="Next" />
 
         <ImageButton
             android:id="@+id/btnRepeat"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_revert"
+            android:src="@drawable/ic_repeat"
             app:tint="#000000"
             android:scaleType="fitCenter"
-            android:alpha="0.5"/>
+            android:alpha="0.5"
+            android:contentDescription="Repeat" />
 
     </LinearLayout>
 

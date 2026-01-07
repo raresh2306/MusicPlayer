@@ -37,7 +37,7 @@ public class ArtistActivity extends AppCompatActivity {
         }
 
         tvArtistName.setText(artistName);
-        
+
         // Set artist image
         int artistImageRes = ArtistImageHelper.getArtistImageResource(this, artistName);
         ivArtistImage.setImageResource(artistImageRes);
@@ -48,6 +48,31 @@ public class ArtistActivity extends AppCompatActivity {
         // Create custom adapter for ListView
         SongAdapter adapter = new SongAdapter(artistSongs);
         lvArtistSongs.setAdapter(adapter);
+
+        // HANDLE SONG CLICK
+        lvArtistSongs.setOnItemClickListener((parent, view, position, id) -> {
+            Song selectedSong = artistSongs.get(position);
+
+            // Find this song in the MAIN library list to get the correct global index
+            List<Song> fullList = MusicLibrary.getSongList();
+            int globalIndex = -1;
+
+            // Search for the song by title/artist match
+            for (int i = 0; i < fullList.size(); i++) {
+                Song s = fullList.get(i);
+                if (s.getTitle().equals(selectedSong.getTitle()) &&
+                        s.getArtist().equals(selectedSong.getArtist())) {
+                    globalIndex = i;
+                    break;
+                }
+            }
+
+            if (globalIndex != -1) {
+                Intent intent = new Intent(ArtistActivity.this, MainActivity.class);
+                intent.putExtra("SONG_INDEX", globalIndex);
+                startActivity(intent);
+            }
+        });
     }
 
     private class SongAdapter extends BaseAdapter {
@@ -91,4 +116,3 @@ public class ArtistActivity extends AppCompatActivity {
         }
     }
 }
-

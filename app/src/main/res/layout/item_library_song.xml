@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:gravity="center_vertical"
+    android:background="?android:attr/selectableItemBackground">
+
+    <ImageView
+        android:id="@+id/ivLibArtistImage"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:src="@android:drawable/ic_menu_gallery"
+        android:scaleType="centerCrop"
+        android:layout_marginEnd="15dp"
+        android:background="#EEEEEE"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvLibSongTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Song Title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+        <TextView
+            android:id="@+id/tvLibArtist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Artist Name"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+    </LinearLayout>
+
+</LinearLayout>

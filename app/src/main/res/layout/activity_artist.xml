@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
+    android:background="#D1F2EB"
     tools:context=".ArtistActivity">
 
     <ImageView
@@ -24,6 +25,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Artist Name"
+        android:textColor="#000000"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textAlignment="center"
@@ -44,6 +46,3 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-
