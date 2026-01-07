@@ -4,24 +4,25 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="@android:drawable/dialog_holo_light_frame"
-    android:padding="10dp">
+    android:padding="8dp">
 
     <ImageView
         android:id="@+id/ivGenreImage"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
         android:src="@android:drawable/ic_menu_gallery"
         android:scaleType="centerCrop"
-        android:layout_marginBottom="10dp"/>
+        android:background="#DDDDDD"
+        android:layout_marginBottom="12dp"/>
 
     <TextView
         android:id="@+id/tvGenreName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Rock"
-        android:textSize="16sp"
+        android:text="Genre Name"
+        android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="#000000"
         android:gravity="center"/>
+
 </LinearLayout>
