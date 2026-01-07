@@ -98,7 +98,7 @@ public class SearchActivity extends BaseActivity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
+            if (convertView ==null) {
                 convertView = LayoutInflater.from(SearchActivity.this)
                         .inflate(R.layout.item_library_song, parent, false);
             }
