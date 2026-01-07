@@ -1,10 +1,11 @@
 package com.example.musicplayer;
 
 import android.content.Intent;
-import android.content.SharedPreferences; // Import added
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -12,7 +13,7 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate; // Import added
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -29,17 +30,31 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler = new Handler();
     private Runnable updateSeekBarRunnable;
 
+    // Listener reference
+    private final Runnable musicListener = this::updateUI;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // --- NEW THEME LOGIC START ---
+        // 1. Load Theme
         SharedPreferences prefs = getSharedPreferences("AppConfig", MODE_PRIVATE);
         boolean isDarkMode = prefs.getBoolean("DarkMode", false);
         AppCompatDelegate.setDefaultNightMode(isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
-        // --- NEW THEME LOGIC END ---
 
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        // 2. Setup Swipe Down Listener on the Root View
+        View rootView = findViewById(R.id.main);
+        rootView.setOnTouchListener(new OnSwipeTouchListener(MainActivity.this) {
+            @Override
+            public void onSwipeDown() {
+                // Finish this activity to go back to the previous one
+                finish();
+                // Optional: Add a smooth slide down animation
+                overridePendingTransition(0, android.R.anim.fade_out);
+            }
+        });
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -48,13 +63,28 @@ public class MainActivity extends AppCompatActivity {
         });
 
         initViews();
-
-        MusicPlayerManager.getInstance().setOnSongChangedListener(this::updateUI);
-
         setupClickListeners();
         setupSeekBar();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Start listening
+        MusicPlayerManager.getInstance().addSongChangedListener(musicListener);
+        // Sync UI
         updateUI();
+        // Start SeekBar
         startSeekBarUpdater();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Stop listening
+        MusicPlayerManager.getInstance().removeSongChangedListener(musicListener);
+        // Stop SeekBar
+        handler.removeCallbacks(updateSeekBarRunnable);
     }
 
     private void initViews() {
@@ -74,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupClickListeners() {
         btnPlayPause.setOnClickListener(v -> {
             MusicPlayerManager.getInstance().togglePlayPause();
-            updatePlayPauseButton();
+            // Listener will handle UI update
         });
 
         btnNext.setOnClickListener(v -> MusicPlayerManager.getInstance().playNext(this));
@@ -152,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startSeekBarUpdater() {
+        handler.removeCallbacks(updateSeekBarRunnable); // Prevent duplicates
         updateSeekBarRunnable = new Runnable() {
             @Override
             public void run() {
@@ -171,11 +202,5 @@ public class MainActivity extends AppCompatActivity {
         int seconds = (millis / 1000) % 60;
         int minutes = (millis / 1000) / 60;
         return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        handler.removeCallbacks(updateSeekBarRunnable);
     }
 }

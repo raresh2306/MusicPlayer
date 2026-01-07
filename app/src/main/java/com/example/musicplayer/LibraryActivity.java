@@ -9,7 +9,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton; // Import this!
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.List;
 
 public class LibraryActivity extends BaseActivity {
@@ -25,7 +25,6 @@ public class LibraryActivity extends BaseActivity {
         TextView title = findViewById(R.id.tvLibraryTitle);
         ImageView playlistImage = findViewById(R.id.ivLibraryImage);
 
-        // UPDATED: Changed from Button to FloatingActionButton
         FloatingActionButton btnPlay = findViewById(R.id.btnPlayPlaylist);
 
         String genreFilter = getIntent().getStringExtra("GENRE_FILTER");
@@ -33,6 +32,7 @@ public class LibraryActivity extends BaseActivity {
 
         // 1. Setup Data and UI
         if (genreFilter != null) {
+            // Case A: Opened from Genres Page (Filtered)
             displayedSongs = MusicLibrary.getSongsByGenre(genreFilter);
             title.setText(genreFilter);
 
@@ -41,8 +41,15 @@ public class LibraryActivity extends BaseActivity {
                 if (resId != 0) playlistImage.setImageResource(resId);
             }
         } else {
+            // Case B: Opened "Music Library" (All Songs)
             displayedSongs = MusicLibrary.getSongList();
             title.setText("All Music");
+
+            // NEW: Set the specific image for the main library
+            int resId = getResources().getIdentifier("library_cover", "drawable", getPackageName());
+            if (resId != 0) {
+                playlistImage.setImageResource(resId);
+            }
         }
 
         LibraryAdapter adapter = new LibraryAdapter(displayedSongs);

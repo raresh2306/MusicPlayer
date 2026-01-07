@@ -30,7 +30,9 @@ public class SearchActivity extends BaseActivity {
         ListView lvResults = findViewById(R.id.lvSearchResults);
 
         allSongs = MusicLibrary.getSongList();
-        filteredSongs = new ArrayList<>(allSongs);
+
+        // CHANGED: Start with an EMPTY list (Cleaner look)
+        filteredSongs = new ArrayList<>();
 
         adapter = new SearchAdapter(filteredSongs);
         lvResults.setAdapter(adapter);
@@ -49,9 +51,11 @@ public class SearchActivity extends BaseActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        // Click to Play
+        // Click to Play (Play song and stay on this screen or go to main)
         lvResults.setOnItemClickListener((parent, view, position, id) -> {
             MusicPlayerManager.getInstance().playSong(this, filteredSongs, position);
+            // Optionally, we can stay here (like the library) or open the player.
+            // Let's stick to the flow of opening the player for search results:
             Intent intent = new Intent(SearchActivity.this, MainActivity.class);
             startActivity(intent);
         });
@@ -63,9 +67,9 @@ public class SearchActivity extends BaseActivity {
 
     private void filter(String query) {
         filteredSongs.clear();
-        if (query.isEmpty()) {
-            filteredSongs.addAll(allSongs);
-        } else {
+
+        // CHANGED: Only show results if the user has typed something
+        if (!query.isEmpty()) {
             String lowerQuery = query.toLowerCase();
             for (Song song : allSongs) {
                 if (song.getTitle().toLowerCase().contains(lowerQuery) ||
@@ -74,6 +78,7 @@ public class SearchActivity extends BaseActivity {
                 }
             }
         }
+
         adapter.notifyDataSetChanged();
     }
 

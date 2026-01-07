@@ -6,23 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MusicPlayerManager {
-    public boolean toggleShuffle() {
-        isShuffle = !isShuffle;
-        return isShuffle;
-    }
-
-    public boolean toggleRepeat() {
-        isRepeat = !isRepeat;
-        return isRepeat;
-    }
-
-    public boolean isShuffleEnabled() {
-        return isShuffle;
-    }
-
-    public boolean isRepeatEnabled() {
-        return isRepeat;
-    }
 
     private static MusicPlayerManager instance;
     private MediaPlayer mediaPlayer;
@@ -31,8 +14,8 @@ public class MusicPlayerManager {
     private boolean isShuffle = false;
     private boolean isRepeat = false;
 
-    // Listener to tell Activities when the song changes
-    private Runnable onSongChangedListener;
+    // CHANGED: List of listeners instead of a single one
+    private List<Runnable> listeners = new ArrayList<>();
 
     private MusicPlayerManager() {
         // Private constructor for Singleton
@@ -45,15 +28,21 @@ public class MusicPlayerManager {
         return instance;
     }
 
-    public void setOnSongChangedListener(Runnable listener) {
-        this.onSongChangedListener = listener;
+    // NEW: Add a listener
+    public void addSongChangedListener(Runnable listener) {
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
+    }
+
+    // NEW: Remove a listener
+    public void removeSongChangedListener(Runnable listener) {
+        listeners.remove(listener);
     }
 
     public void playSong(Context context, List<Song> songs, int index) {
-        // Update playlist context
         this.currentPlaylist = new ArrayList<>(songs);
         this.currentIndex = index;
-
         playCurrentSong(context);
     }
 
@@ -108,13 +97,34 @@ public class MusicPlayerManager {
         playCurrentSong(context);
     }
 
+    // Notify ALL listeners
     private void notifyUI() {
-        if (onSongChangedListener != null) {
-            onSongChangedListener.run();
+        for (Runnable listener : listeners) {
+            if (listener != null) {
+                listener.run();
+            }
         }
     }
 
-    // --- Getters for UI ---
+    // --- Getters and Toggles ---
+    public boolean toggleShuffle() {
+        isShuffle = !isShuffle;
+        return isShuffle;
+    }
+
+    public boolean toggleRepeat() {
+        isRepeat = !isRepeat;
+        return isRepeat;
+    }
+
+    public boolean isShuffleEnabled() {
+        return isShuffle;
+    }
+
+    public boolean isRepeatEnabled() {
+        return isRepeat;
+    }
+
     public boolean isPlaying() {
         return mediaPlayer != null && mediaPlayer.isPlaying();
     }

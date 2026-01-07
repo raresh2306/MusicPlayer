@@ -13,7 +13,8 @@
         android:src="@android:drawable/ic_menu_gallery"
         android:scaleType="centerCrop"
         android:background="#DDDDDD"
-        android:layout_marginBottom="12dp"/>
+        android:layout_marginBottom="12dp"
+        android:layout_marginTop="30dp"/>
 
     <TextView
         android:id="@+id/tvGenreName"
