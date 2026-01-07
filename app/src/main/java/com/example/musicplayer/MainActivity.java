@@ -15,28 +15,19 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import java.util.List;
 import java.util.Locale;
-import java.util.Random;
-import java.util.Stack; // Import Stack for History
 
 public class MainActivity extends AppCompatActivity {
 
-    private MediaPlayer mediaPlayer;
+    // UI Components
     private TextView tvSongTitle, tvArtist, tvCurrentTime, tvTotalTime;
     private ImageView albumArt;
     private SeekBar seekBar;
     private ImageButton btnPlayPause, btnNext, btnPrev, btnShuffle, btnRepeat;
 
-    private List<Song> songList;
-    private int currentIndex = 0;
-    private boolean isShuffle = false;
-    private boolean isRepeat = false;
+    // SeekBar Updater
     private Handler handler = new Handler();
     private Runnable updateSeekBarRunnable;
-
-    // HISTORY STACK to remember where we came from
-    private Stack<Integer> playHistory = new Stack<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,13 +35,33 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        // Handle Window Insets (Edge-to-Edge)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        // Initialize Views
+        // 1. Initialize Views
+        initViews();
+
+        // 2. Setup Listener: When the song changes in the background, update this screen
+        MusicPlayerManager.getInstance().setOnSongChangedListener(this::updateUI);
+
+        // 3. Setup Button Actions (Delegate everything to the Manager)
+        setupClickListeners();
+
+        // 4. Setup SeekBar Logic
+        setupSeekBar();
+
+        // 5. Initial UI Sync (in case a song is already playing)
+        updateUI();
+
+        // 6. Start the timer to move the SeekBar
+        startSeekBarUpdater();
+    }
+
+    private void initViews() {
         tvSongTitle = findViewById(R.id.tvSongTitle);
         tvArtist = findViewById(R.id.tvArtist);
         tvCurrentTime = findViewById(R.id.tvCurrentTime);
@@ -62,63 +73,55 @@ public class MainActivity extends AppCompatActivity {
         btnPrev = findViewById(R.id.btnPrev);
         btnShuffle = findViewById(R.id.btnShuffle);
         btnRepeat = findViewById(R.id.btnRepeat);
+    }
 
-        // Load songs
-        songList = MusicLibrary.getSongList();
+    private void setupClickListeners() {
+        // Play/Pause
+        btnPlayPause.setOnClickListener(v -> {
+            MusicPlayerManager.getInstance().togglePlayPause();
+            updatePlayPauseButton(); // Update icon immediately
+        });
 
-        // Check for specific song start
-        int passedIndex = getIntent().getIntExtra("SONG_INDEX", -1);
-        if (passedIndex != -1) {
-            currentIndex = passedIndex;
-        }
+        // Next
+        btnNext.setOnClickListener(v -> MusicPlayerManager.getInstance().playNext(this));
 
-        if (!songList.isEmpty()) {
-            setupMediaPlayer(currentIndex);
-            if (passedIndex != -1) {
-                mediaPlayer.start();
-                btnPlayPause.setImageResource(android.R.drawable.ic_media_pause);
-            }
-        }
+        // Previous
+        btnPrev.setOnClickListener(v -> MusicPlayerManager.getInstance().playPrevious(this));
 
+        // Shuffle
+        btnShuffle.setOnClickListener(v -> {
+            boolean newState = MusicPlayerManager.getInstance().toggleShuffle();
+            btnShuffle.setAlpha(newState ? 1.0f : 0.5f); // Visual feedback
+        });
+
+        // Repeat
+        btnRepeat.setOnClickListener(v -> {
+            boolean newState = MusicPlayerManager.getInstance().toggleRepeat();
+            btnRepeat.setAlpha(newState ? 1.0f : 0.5f); // Visual feedback
+        });
+
+        // Click Artist Name -> Open Artist Page
         tvArtist.setOnClickListener(v -> {
-            if (!songList.isEmpty()) {
-                String artistName = songList.get(currentIndex).getArtist();
+            Song current = MusicPlayerManager.getInstance().getCurrentSong();
+            if (current != null) {
                 Intent intent = new Intent(MainActivity.this, ArtistActivity.class);
-                intent.putExtra("ARTIST_NAME", artistName);
+                intent.putExtra("ARTIST_NAME", current.getArtist());
                 startActivity(intent);
             }
         });
+    }
 
-        btnPlayPause.setOnClickListener(v -> togglePlayPause());
-        btnNext.setOnClickListener(v -> playNext());
-
-        // PREVIOUS BUTTON LOGIC
-        btnPrev.setOnClickListener(v -> {
-            // 1. If we are more than 3 seconds in, just restart the song
-            if (mediaPlayer != null && mediaPlayer.getCurrentPosition() > 3000) {
-                mediaPlayer.seekTo(0);
-            }
-            // 2. Otherwise, actually go to the previous track
-            else {
-                playPrevious();
-            }
-        });
-
-        btnShuffle.setOnClickListener(v -> {
-            isShuffle = !isShuffle;
-            btnShuffle.setAlpha(isShuffle ? 1.0f : 0.5f);
-        });
-
-        btnRepeat.setOnClickListener(v -> {
-            isRepeat = !isRepeat;
-            btnRepeat.setAlpha(isRepeat ? 1.0f : 0.5f);
-        });
-
+    private void setupSeekBar() {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser && mediaPlayer != null) {
-                    mediaPlayer.seekTo(progress);
+                if (fromUser) {
+                    // Only seek if the user dragged it
+                    MediaPlayer mp = MusicPlayerManager.getInstance().getMediaPlayer();
+                    if (mp != null) {
+                        mp.seekTo(progress);
+                        tvCurrentTime.setText(formatTime(progress));
+                    }
                 }
             }
             @Override
@@ -126,90 +129,60 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {}
         });
-
-        updateSeekBarRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                    int currentPosition = mediaPlayer.getCurrentPosition();
-                    seekBar.setProgress(currentPosition);
-                    tvCurrentTime.setText(formatTime(currentPosition));
-                }
-                handler.postDelayed(this, 1000);
-            }
-        };
-        handler.postDelayed(updateSeekBarRunnable, 1000);
     }
 
-    private void setupMediaPlayer(int index) {
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-        }
-        Song currentSong = songList.get(index);
-        mediaPlayer = MediaPlayer.create(this, currentSong.getResId());
+    private void updateUI() {
+        // 1. Get current data from Manager
+        Song currentSong = MusicPlayerManager.getInstance().getCurrentSong();
+        MediaPlayer mp = MusicPlayerManager.getInstance().getMediaPlayer();
 
+        if (currentSong == null) return;
+
+        // 2. Update Text and Images
         tvSongTitle.setText(currentSong.getTitle());
         tvArtist.setText(currentSong.getArtist());
 
-        int artistImageRes = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
-        albumArt.setImageResource(artistImageRes);
+        int resId = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
+        albumArt.setImageResource(resId);
 
-        int duration = mediaPlayer.getDuration();
-        seekBar.setMax(duration);
-        tvTotalTime.setText(formatTime(duration));
-        tvCurrentTime.setText(formatTime(0));
+        // 3. Update Play/Pause Icon
+        updatePlayPauseButton();
 
-        mediaPlayer.setOnCompletionListener(mp -> {
-            if (isRepeat) {
-                mediaPlayer.start();
-            } else {
-                playNext();
-            }
-        });
+        // 4. Update SeekBar Duration
+        if (mp != null) {
+            int duration = mp.getDuration();
+            seekBar.setMax(duration);
+            tvTotalTime.setText(formatTime(duration));
+        }
+
+        // 5. Sync Shuffle/Repeat Buttons
+        btnShuffle.setAlpha(MusicPlayerManager.getInstance().isShuffleEnabled() ? 1.0f : 0.5f);
+        btnRepeat.setAlpha(MusicPlayerManager.getInstance().isRepeatEnabled() ? 1.0f : 0.5f);
     }
 
-    private void togglePlayPause() {
-        if (mediaPlayer == null) return;
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-            btnPlayPause.setImageResource(android.R.drawable.ic_media_play);
-        } else {
-            mediaPlayer.start();
+    private void updatePlayPauseButton() {
+        if (MusicPlayerManager.getInstance().isPlaying()) {
             btnPlayPause.setImageResource(android.R.drawable.ic_media_pause);
+        } else {
+            btnPlayPause.setImageResource(android.R.drawable.ic_media_play);
         }
     }
 
-    private void playNext() {
-        if (songList.isEmpty()) return;
-
-        // SAVE CURRENT SONG TO HISTORY BEFORE MOVING
-        playHistory.push(currentIndex);
-
-        if (isShuffle) {
-            currentIndex = new Random().nextInt(songList.size());
-        } else {
-            currentIndex = (currentIndex + 1) % songList.size();
-        }
-        setupMediaPlayer(currentIndex);
-        mediaPlayer.start();
-        btnPlayPause.setImageResource(android.R.drawable.ic_media_pause);
-    }
-
-    private void playPrevious() {
-        if (songList.isEmpty()) return;
-
-        // CHECK HISTORY FIRST
-        if (!playHistory.isEmpty()) {
-            // Go back to the song we were just listening to
-            currentIndex = playHistory.pop();
-        } else {
-            // If no history, use the standard linear previous (index - 1)
-            currentIndex = (currentIndex - 1 + songList.size()) % songList.size();
-        }
-
-        setupMediaPlayer(currentIndex);
-        mediaPlayer.start();
-        btnPlayPause.setImageResource(android.R.drawable.ic_media_pause);
+    private void startSeekBarUpdater() {
+        updateSeekBarRunnable = new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = MusicPlayerManager.getInstance().getMediaPlayer();
+                if (mp != null && mp.isPlaying()) {
+                    int currentPosition = mp.getCurrentPosition();
+                    seekBar.setProgress(currentPosition);
+                    tvCurrentTime.setText(formatTime(currentPosition));
+                }
+                // Run this again in 1 second
+                handler.postDelayed(this, 1000);
+            }
+        };
+        handler.post(updateSeekBarRunnable);
     }
 
     private String formatTime(int millis) {
@@ -221,10 +194,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
-        }
+        // Stop updating the seekbar when we leave the screen to save battery
         handler.removeCallbacks(updateSeekBarRunnable);
     }
 }

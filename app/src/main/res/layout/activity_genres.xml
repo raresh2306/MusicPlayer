@@ -19,10 +19,13 @@
     <GridView
         android:id="@+id/gvGenres"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:numColumns="2"
         android:horizontalSpacing="16dp"
         android:verticalSpacing="16dp"
         android:stretchMode="columnWidth"/>
+
+    <include layout="@layout/view_mini_player" />
 
 </LinearLayout>

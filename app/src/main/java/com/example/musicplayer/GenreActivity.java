@@ -1,6 +1,5 @@
 package com.example.musicplayer;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,27 +9,18 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 
-public class GenreActivity extends AppCompatActivity {
+// Extend BaseActivity
+public class GenreActivity extends BaseActivity {
 
-    // Define your genres and their matching drawable names here
     final String[] GENRE_NAMES = {
-            "Hip-Hop",
-            "Rock",
-            "Alternative",
-            "Romanian Rock",
-            "Romanian Alternative",
-            "Romanian Hip-Hop"
+            "Hip-Hop", "Rock", "Alternative", "Romanian Rock",
+            "Romanian Alternative", "Romanian Hip-Hop"
     };
 
     final String[] GENRE_IMAGES = {
-            "genre_hiphop",
-            "genre_rock",
-            "genre_alternative",
-            "genre_ro_rock",
-            "genre_ro_alternative",
-            "genre_ro_hiphop"
+            "genre_hiphop", "genre_rock", "genre_alternative",
+            "genre_ro_rock", "genre_ro_alternative", "genre_ro_hiphop"
     };
 
     @Override
@@ -44,12 +34,13 @@ public class GenreActivity extends AppCompatActivity {
 
         gridView.setOnItemClickListener((parent, view, position, id) -> {
             String selectedGenre = GENRE_NAMES[position];
-
-            // Open LibraryActivity with a Filter
             Intent intent = new Intent(GenreActivity.this, LibraryActivity.class);
             intent.putExtra("GENRE_FILTER", selectedGenre);
             startActivity(intent);
         });
+
+        // Initialize the Mini Player
+        setupMiniPlayer();
     }
 
     private class GenreAdapter extends BaseAdapter {
@@ -72,14 +63,13 @@ public class GenreActivity extends AppCompatActivity {
 
             tvName.setText(GENRE_NAMES[position]);
 
-            // Try to find the image in resources
             int resId = getResources().getIdentifier(
                     GENRE_IMAGES[position], "drawable", getPackageName());
 
             if (resId != 0) {
                 ivImage.setImageResource(resId);
             } else {
-                ivImage.setImageResource(android.R.drawable.ic_menu_gallery); // Default
+                ivImage.setImageResource(android.R.drawable.ic_menu_gallery);
             }
 
             return convertView;

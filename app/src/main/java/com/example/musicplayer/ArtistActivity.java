@@ -9,17 +9,16 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import java.util.List;
 
-public class ArtistActivity extends AppCompatActivity {
+// Extend BaseActivity
+public class ArtistActivity extends BaseActivity {
 
     private ImageView ivArtistImage;
     private TextView tvArtistName;
     private ListView lvArtistSongs;
     private List<Song> artistSongs;
+    private String currentArtistName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,49 +29,33 @@ public class ArtistActivity extends AppCompatActivity {
         tvArtistName = findViewById(R.id.tvArtistName);
         lvArtistSongs = findViewById(R.id.lvArtistSongs);
 
-        // Get artist name from intent
-        String artistName = getIntent().getStringExtra("ARTIST_NAME");
-        if (artistName == null) {
-            artistName = "Unknown Artist";
+        currentArtistName = getIntent().getStringExtra("ARTIST_NAME");
+        if (currentArtistName == null) {
+            currentArtistName = "Unknown Artist";
         }
 
-        tvArtistName.setText(artistName);
+        tvArtistName.setText(currentArtistName);
 
-        // Set artist image
-        int artistImageRes = ArtistImageHelper.getArtistImageResource(this, artistName);
+        int artistImageRes = ArtistImageHelper.getArtistImageResource(this, currentArtistName);
         ivArtistImage.setImageResource(artistImageRes);
 
-        // Get songs by this artist
-        artistSongs = MusicLibrary.getSongsByArtist(artistName);
+        artistSongs = MusicLibrary.getSongsByArtist(currentArtistName);
 
-        // Create custom adapter for ListView
         SongAdapter adapter = new SongAdapter(artistSongs);
         lvArtistSongs.setAdapter(adapter);
 
-        // HANDLE SONG CLICK
+        // UPDATED: Use MusicPlayerManager
         lvArtistSongs.setOnItemClickListener((parent, view, position, id) -> {
-            Song selectedSong = artistSongs.get(position);
+            // 1. Play ONLY this artist's songs
+            MusicPlayerManager.getInstance().playSong(ArtistActivity.this, artistSongs, position);
 
-            // Find this song in the MAIN library list to get the correct global index
-            List<Song> fullList = MusicLibrary.getSongList();
-            int globalIndex = -1;
-
-            // Search for the song by title/artist match
-            for (int i = 0; i < fullList.size(); i++) {
-                Song s = fullList.get(i);
-                if (s.getTitle().equals(selectedSong.getTitle()) &&
-                        s.getArtist().equals(selectedSong.getArtist())) {
-                    globalIndex = i;
-                    break;
-                }
-            }
-
-            if (globalIndex != -1) {
-                Intent intent = new Intent(ArtistActivity.this, MainActivity.class);
-                intent.putExtra("SONG_INDEX", globalIndex);
-                startActivity(intent);
-            }
+            // 2. Open Main Player
+            Intent intent = new Intent(ArtistActivity.this, MainActivity.class);
+            startActivity(intent);
         });
+
+        // Initialize the Mini Player
+        setupMiniPlayer();
     }
 
     private class SongAdapter extends BaseAdapter {
@@ -83,19 +66,11 @@ public class ArtistActivity extends AppCompatActivity {
         }
 
         @Override
-        public int getCount() {
-            return songs.size();
-        }
-
+        public int getCount() { return songs.size(); }
         @Override
-        public Object getItem(int position) {
-            return songs.get(position);
-        }
-
+        public Object getItem(int position) { return songs.get(position); }
         @Override
-        public long getItemId(int position) {
-            return position;
-        }
+        public long getItemId(int position) { return position; }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {

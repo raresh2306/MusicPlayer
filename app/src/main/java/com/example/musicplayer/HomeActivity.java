@@ -3,9 +3,9 @@ package com.example.musicplayer;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
-import androidx.appcompat.app.AppCompatActivity;
 
-public class HomeActivity extends AppCompatActivity {
+// Extend BaseActivity instead of AppCompatActivity
+public class HomeActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,5 +22,8 @@ public class HomeActivity extends AppCompatActivity {
         btnGen.setOnClickListener(v -> {
             startActivity(new Intent(HomeActivity.this, GenreActivity.class));
         });
+
+        // Initialize the Mini Player
+        setupMiniPlayer();
     }
 }
