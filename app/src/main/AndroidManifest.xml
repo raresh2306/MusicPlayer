@@ -41,6 +41,8 @@
             android:name=".ArtistActivity"
             android:exported="false" />
 
+        <activity android:name=".SearchActivity" />
+
     </application>
 
 </manifest>

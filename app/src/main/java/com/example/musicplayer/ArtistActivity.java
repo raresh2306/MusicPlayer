@@ -11,7 +11,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import java.util.List;
 
-// Extend BaseActivity
 public class ArtistActivity extends BaseActivity {
 
     private ImageView ivArtistImage;
@@ -44,18 +43,13 @@ public class ArtistActivity extends BaseActivity {
         SongAdapter adapter = new SongAdapter(artistSongs);
         lvArtistSongs.setAdapter(adapter);
 
-        // UPDATED: Use MusicPlayerManager
+        // UPDATED: Click just plays the song, doesn't open full player
         lvArtistSongs.setOnItemClickListener((parent, view, position, id) -> {
-            // 1. Play ONLY this artist's songs
             MusicPlayerManager.getInstance().playSong(ArtistActivity.this, artistSongs, position);
-
-            // 2. Open Main Player
-            Intent intent = new Intent(ArtistActivity.this, MainActivity.class);
-            startActivity(intent);
         });
 
-        // Initialize the Mini Player
         setupMiniPlayer();
+        setupBottomNavigation();
     }
 
     private class SongAdapter extends BaseAdapter {

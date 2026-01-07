@@ -25,5 +25,6 @@ public class HomeActivity extends BaseActivity {
 
         // Initialize the Mini Player
         setupMiniPlayer();
+        setupBottomNavigation();
     }
 }

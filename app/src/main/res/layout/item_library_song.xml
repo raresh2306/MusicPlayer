@@ -28,7 +28,7 @@
             android:text="Song Title"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#000000"
+            android:textColor="@color/primary_text"
             android:maxLines="1"
             android:ellipsize="end"/>
 
@@ -38,7 +38,7 @@
             android:layout_height="wrap_content"
             android:text="Artist Name"
             android:textSize="14sp"
-            android:textColor="#666666"
+            android:textColor="@color/secondary_text"
             android:maxLines="1"
             android:ellipsize="end"/>
     </LinearLayout>

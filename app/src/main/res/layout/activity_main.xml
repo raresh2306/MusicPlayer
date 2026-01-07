@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="#D1F2EB"
+    android:background="@color/main_background"
     android:padding="20dp">
 
     <ImageView
@@ -24,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Song Title"
-        android:textColor="#000000"
+        android:textColor="@color/primary_text"
         android:textSize="26sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -36,7 +36,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Artist"
-        android:textColor="#444444"
+        android:textColor="@color/secondary_text"
         android:textSize="18sp"
         android:gravity="center"
         android:layout_marginBottom="30dp"
@@ -52,8 +52,8 @@
             android:id="@+id/seekBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:progressTint="#000000"
-            android:thumbTint="#000000"/>
+            android:progressTint="@color/icon_tint"
+            android:thumbTint="@color/icon_tint"/>
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -66,7 +66,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0:00"
-                android:textColor="#444444"
+                android:textColor="@color/secondary_text"
                 android:textSize="12sp"
                 android:layout_alignParentStart="true"
                 tools:ignore="HardcodedText" />
@@ -76,7 +76,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0:00"
-                android:textColor="#444444"
+                android:textColor="@color/secondary_text"
                 android:textSize="12sp"
                 android:layout_alignParentEnd="true"
                 tools:ignore="HardcodedText" />
@@ -95,7 +95,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_shuffle_new"
-            app:tint="#000000"
+            app:tint="@color/icon_tint"
             android:scaleType="fitCenter"
             android:alpha="0.5"
             android:contentDescription="Shuffle" />
@@ -106,7 +106,7 @@
             android:layout_height="60dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_previous"
-            app:tint="#000000"
+            app:tint="@color/icon_tint"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:contentDescription="Previous" />
@@ -117,7 +117,7 @@
             android:layout_height="80dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_play"
-            app:tint="#000000"
+            app:tint="@color/icon_tint"
             android:scaleType="fitCenter"
             android:contentDescription="Play Pause" />
 
@@ -127,7 +127,7 @@
             android:layout_height="60dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_next"
-            app:tint="#000000"
+            app:tint="@color/icon_tint"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:contentDescription="Next" />
@@ -138,7 +138,7 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_repeat"
-            app:tint="#000000"
+            app:tint="@color/icon_tint"
             android:scaleType="fitCenter"
             android:alpha="0.5"
             android:contentDescription="Repeat" />

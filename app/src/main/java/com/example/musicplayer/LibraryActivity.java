@@ -9,9 +9,9 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton; // Import this!
 import java.util.List;
 
-// Extend BaseActivity
 public class LibraryActivity extends BaseActivity {
 
     private List<Song> displayedSongs;
@@ -23,31 +23,45 @@ public class LibraryActivity extends BaseActivity {
 
         ListView listView = findViewById(R.id.lvAllSongs);
         TextView title = findViewById(R.id.tvLibraryTitle);
+        ImageView playlistImage = findViewById(R.id.ivLibraryImage);
+
+        // UPDATED: Changed from Button to FloatingActionButton
+        FloatingActionButton btnPlay = findViewById(R.id.btnPlayPlaylist);
 
         String genreFilter = getIntent().getStringExtra("GENRE_FILTER");
+        String genreImageName = getIntent().getStringExtra("GENRE_IMAGE");
 
+        // 1. Setup Data and UI
         if (genreFilter != null) {
             displayedSongs = MusicLibrary.getSongsByGenre(genreFilter);
-            if (title != null) title.setText(genreFilter + " Playlist");
+            title.setText(genreFilter);
+
+            if (genreImageName != null) {
+                int resId = getResources().getIdentifier(genreImageName, "drawable", getPackageName());
+                if (resId != 0) playlistImage.setImageResource(resId);
+            }
         } else {
             displayedSongs = MusicLibrary.getSongList();
+            title.setText("All Music");
         }
 
         LibraryAdapter adapter = new LibraryAdapter(displayedSongs);
         listView.setAdapter(adapter);
 
-        // UPDATED: Use MusicPlayerManager instead of passing messy Intents
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            // 1. Play the specific list of songs (Filtered or All)
-            MusicPlayerManager.getInstance().playSong(LibraryActivity.this, displayedSongs, position);
-
-            // 2. Open MainActivity (which now acts as a UI viewer)
-            Intent intent = new Intent(LibraryActivity.this, MainActivity.class);
-            startActivity(intent);
+        // 2. Play Button Logic
+        btnPlay.setOnClickListener(v -> {
+            if (!displayedSongs.isEmpty()) {
+                MusicPlayerManager.getInstance().playSong(LibraryActivity.this, displayedSongs, 0);
+            }
         });
 
-        // Initialize the Mini Player
+        // 3. List Click Logic
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            MusicPlayerManager.getInstance().playSong(LibraryActivity.this, displayedSongs, position);
+        });
+
         setupMiniPlayer();
+        setupBottomNavigation();
     }
 
     private class LibraryAdapter extends BaseAdapter {

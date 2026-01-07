@@ -1,14 +1,26 @@
 package com.example.musicplayer;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 public abstract class BaseActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // Load Theme Preference BEFORE super.onCreate
+        SharedPreferences prefs = getSharedPreferences("AppConfig", MODE_PRIVATE);
+        boolean isDarkMode = prefs.getBoolean("DarkMode", false);
+        AppCompatDelegate.setDefaultNightMode(isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     protected void onResume() {
@@ -16,19 +28,16 @@ public abstract class BaseActivity extends AppCompatActivity {
         updateMiniPlayer();
     }
 
-    // Call this method in onCreate of child activities after setContentView
     protected void setupMiniPlayer() {
         View miniPlayer = findViewById(R.id.miniPlayerContainer);
         if (miniPlayer == null) return;
 
-        // Click on bar opens Main Player
         miniPlayer.setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT); // Important!
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
         });
 
-        // Play/Pause button logic
         ImageButton btnPlayPause = findViewById(R.id.btnMiniPlayPause);
         btnPlayPause.setOnClickListener(v -> {
             MusicPlayerManager.getInstance().togglePlayPause();
@@ -36,6 +45,59 @@ public abstract class BaseActivity extends AppCompatActivity {
         });
 
         updateMiniPlayer();
+    }
+
+    protected void setupBottomNavigation() {
+        View navHome = findViewById(R.id.navHome);
+        View navSearch = findViewById(R.id.navSearch);
+        View navPlaylists = findViewById(R.id.navPlaylists);
+        View navTheme = findViewById(R.id.navTheme); // NEW Button
+
+        if (navHome != null) {
+            navHome.setOnClickListener(v -> {
+                if (!(this instanceof HomeActivity)) {
+                    startActivity(new Intent(this, HomeActivity.class));
+                    overridePendingTransition(0, 0);
+                }
+            });
+        }
+
+        if (navSearch != null) {
+            navSearch.setOnClickListener(v -> {
+                if (!(this instanceof SearchActivity)) {
+                    startActivity(new Intent(this, SearchActivity.class));
+                    overridePendingTransition(0, 0);
+                }
+            });
+        }
+
+        if (navPlaylists != null) {
+            navPlaylists.setOnClickListener(v -> {
+                if (!(this instanceof GenreActivity)) {
+                    startActivity(new Intent(this, GenreActivity.class));
+                    overridePendingTransition(0, 0);
+                }
+            });
+        }
+
+        // NEW: Toggle Theme Logic
+        if (navTheme != null) {
+            navTheme.setOnClickListener(v -> toggleTheme());
+        }
+    }
+
+    private void toggleTheme() {
+        SharedPreferences prefs = getSharedPreferences("AppConfig", MODE_PRIVATE);
+        boolean isDarkMode = prefs.getBoolean("DarkMode", false);
+
+        // Save new state
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("DarkMode", !isDarkMode);
+        editor.apply();
+
+        // Apply and Recreate
+        AppCompatDelegate.setDefaultNightMode(!isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+        recreate(); // Reloads the screen to apply colors
     }
 
     private void updateMiniPlayer() {

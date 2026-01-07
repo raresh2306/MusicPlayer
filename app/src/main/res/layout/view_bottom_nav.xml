@@ -3,11 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottomNav"
     android:layout_width="match_parent"
-    android:layout_height="60dp"
+    android:layout_height="70dp"
+    android:paddingBottom="5dp"
     android:orientation="horizontal"
-    android:background="#000000"
+    android:background="@color/bottom_nav_background"
     android:gravity="center_vertical"
-    android:weightSum="3">
+    android:weightSum="4">
 
     <LinearLayout
         android:id="@+id/navHome"
@@ -24,14 +25,13 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_home"
-            app:tint="#FFFFFF" />
-
+            app:tint="@color/icon_tint_inverse"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Home"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp" />
+            android:textColor="@color/primary_text"
+            android:textSize="10sp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -49,12 +49,12 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_search"
-            app:tint="#FFFFFF" />
+            app:tint="@color/icon_tint_inverse"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Search"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/primary_text"
             android:textSize="10sp"/>
     </LinearLayout>
 
@@ -73,12 +73,36 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_playlist"
-            app:tint="#FFFFFF"/>
+            app:tint="@color/icon_tint_inverse"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Playlists"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/primary_text"
+            android:textSize="10sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navTheme"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_darkmode"
+            app:tint="@color/icon_tint_inverse"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Theme"
+            android:textColor="@color/primary_text"
             android:textSize="10sp"/>
     </LinearLayout>
 

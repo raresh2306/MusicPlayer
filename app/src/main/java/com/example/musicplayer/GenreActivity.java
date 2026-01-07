@@ -34,13 +34,16 @@ public class GenreActivity extends BaseActivity {
 
         gridView.setOnItemClickListener((parent, view, position, id) -> {
             String selectedGenre = GENRE_NAMES[position];
+            String selectedImage = GENRE_IMAGES[position]; // Get the image name
+
             Intent intent = new Intent(GenreActivity.this, LibraryActivity.class);
             intent.putExtra("GENRE_FILTER", selectedGenre);
+            intent.putExtra("GENRE_IMAGE", selectedImage); // Pass it to the next screen
             startActivity(intent);
         });
 
-        // Initialize the Mini Player
         setupMiniPlayer();
+        setupBottomNavigation();
     }
 
     private class GenreAdapter extends BaseAdapter {

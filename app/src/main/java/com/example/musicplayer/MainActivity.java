@@ -1,6 +1,7 @@
 package com.example.musicplayer;
 
 import android.content.Intent;
+import android.content.SharedPreferences; // Import added
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate; // Import added
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -19,45 +21,39 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    // UI Components
     private TextView tvSongTitle, tvArtist, tvCurrentTime, tvTotalTime;
     private ImageView albumArt;
     private SeekBar seekBar;
     private ImageButton btnPlayPause, btnNext, btnPrev, btnShuffle, btnRepeat;
 
-    // SeekBar Updater
     private Handler handler = new Handler();
     private Runnable updateSeekBarRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // --- NEW THEME LOGIC START ---
+        SharedPreferences prefs = getSharedPreferences("AppConfig", MODE_PRIVATE);
+        boolean isDarkMode = prefs.getBoolean("DarkMode", false);
+        AppCompatDelegate.setDefaultNightMode(isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+        // --- NEW THEME LOGIC END ---
+
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        // Handle Window Insets (Edge-to-Edge)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        // 1. Initialize Views
         initViews();
 
-        // 2. Setup Listener: When the song changes in the background, update this screen
         MusicPlayerManager.getInstance().setOnSongChangedListener(this::updateUI);
 
-        // 3. Setup Button Actions (Delegate everything to the Manager)
         setupClickListeners();
-
-        // 4. Setup SeekBar Logic
         setupSeekBar();
-
-        // 5. Initial UI Sync (in case a song is already playing)
         updateUI();
-
-        // 6. Start the timer to move the SeekBar
         startSeekBarUpdater();
     }
 
@@ -76,31 +72,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        // Play/Pause
         btnPlayPause.setOnClickListener(v -> {
             MusicPlayerManager.getInstance().togglePlayPause();
-            updatePlayPauseButton(); // Update icon immediately
+            updatePlayPauseButton();
         });
 
-        // Next
         btnNext.setOnClickListener(v -> MusicPlayerManager.getInstance().playNext(this));
-
-        // Previous
         btnPrev.setOnClickListener(v -> MusicPlayerManager.getInstance().playPrevious(this));
 
-        // Shuffle
         btnShuffle.setOnClickListener(v -> {
             boolean newState = MusicPlayerManager.getInstance().toggleShuffle();
-            btnShuffle.setAlpha(newState ? 1.0f : 0.5f); // Visual feedback
+            btnShuffle.setAlpha(newState ? 1.0f : 0.5f);
         });
 
-        // Repeat
         btnRepeat.setOnClickListener(v -> {
             boolean newState = MusicPlayerManager.getInstance().toggleRepeat();
-            btnRepeat.setAlpha(newState ? 1.0f : 0.5f); // Visual feedback
+            btnRepeat.setAlpha(newState ? 1.0f : 0.5f);
         });
 
-        // Click Artist Name -> Open Artist Page
         tvArtist.setOnClickListener(v -> {
             Song current = MusicPlayerManager.getInstance().getCurrentSong();
             if (current != null) {
@@ -116,7 +105,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    // Only seek if the user dragged it
                     MediaPlayer mp = MusicPlayerManager.getInstance().getMediaPlayer();
                     if (mp != null) {
                         mp.seekTo(progress);
@@ -132,30 +120,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUI() {
-        // 1. Get current data from Manager
         Song currentSong = MusicPlayerManager.getInstance().getCurrentSong();
         MediaPlayer mp = MusicPlayerManager.getInstance().getMediaPlayer();
 
         if (currentSong == null) return;
 
-        // 2. Update Text and Images
         tvSongTitle.setText(currentSong.getTitle());
         tvArtist.setText(currentSong.getArtist());
 
         int resId = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
         albumArt.setImageResource(resId);
 
-        // 3. Update Play/Pause Icon
         updatePlayPauseButton();
 
-        // 4. Update SeekBar Duration
         if (mp != null) {
             int duration = mp.getDuration();
             seekBar.setMax(duration);
             tvTotalTime.setText(formatTime(duration));
         }
 
-        // 5. Sync Shuffle/Repeat Buttons
         btnShuffle.setAlpha(MusicPlayerManager.getInstance().isShuffleEnabled() ? 1.0f : 0.5f);
         btnRepeat.setAlpha(MusicPlayerManager.getInstance().isRepeatEnabled() ? 1.0f : 0.5f);
     }
@@ -178,7 +161,6 @@ public class MainActivity extends AppCompatActivity {
                     seekBar.setProgress(currentPosition);
                     tvCurrentTime.setText(formatTime(currentPosition));
                 }
-                // Run this again in 1 second
                 handler.postDelayed(this, 1000);
             }
         };
@@ -194,7 +176,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Stop updating the seekbar when we leave the screen to save battery
         handler.removeCallbacks(updateSeekBarRunnable);
     }
 }
