@@ -6,18 +6,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.GridView;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.textfield.TextInputEditText;
 
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -26,20 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// Extend BaseActivity
-public class GenreActivity extends BaseActivity {
+public class PlaylistsActivity extends BaseActivity {
 
-    final String[] GENRE_NAMES = {
-            "Hip-Hop", "Rock", "Alternative", "Romanian Rock",
-            "Romanian Alternative", "Romanian Hip-Hop"
-    };
-
-    final String[] GENRE_IMAGES = {
-            "genre_hiphop", "genre_rock", "genre_alternative",
-            "genre_ro_rock", "genre_ro_alternative", "genre_ro_hiphop"
-    };
-    
-    private GridView gridView;
     private ListView listViewPlaylists;
     private List<Playlist> userPlaylists;
     private PlaylistAdapter playlistAdapter;
@@ -50,29 +36,14 @@ public class GenreActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_genres);
+        setContentView(R.layout.activity_playlists);
 
         db = FirebaseFirestore.getInstance();
         sessionManager = new SessionManager(this);
         userPlaylists = new ArrayList<>();
 
-        gridView = findViewById(R.id.gvGenres);
         listViewPlaylists = findViewById(R.id.lvUserPlaylists);
         
-        // Setup GridView pentru genuri
-        GenreAdapter genreAdapter = new GenreAdapter();
-        gridView.setAdapter(genreAdapter);
-        gridView.setOnItemClickListener((parent, view, position, id) -> {
-            String selectedGenre = GENRE_NAMES[position];
-            String selectedImage = GENRE_IMAGES[position];
-            
-            Intent intent = new Intent(GenreActivity.this, LibraryActivity.class);
-            intent.putExtra("GENRE_FILTER", selectedGenre);
-            intent.putExtra("GENRE_IMAGE", selectedImage);
-            startActivity(intent);
-        });
-        
-        // Setup ListView pentru playlist-urile utilizatorului
         TextView tvPlaylistsTitle = findViewById(R.id.tvPlaylistsTitle);
         if (tvPlaylistsTitle != null) {
             tvPlaylistsTitle.setText("My Playlists");
@@ -161,7 +132,7 @@ public class GenreActivity extends BaseActivity {
     }
     
     private void showPlaylistOptionsDialog(Playlist playlist) {
-        String[] options = {"Play Playlist", "View Songs"};
+        String[] options = {"Play Playlist", "View Songs", "Add Songs"};
         
         new AlertDialog.Builder(this)
             .setTitle(playlist.getName())
@@ -172,6 +143,9 @@ public class GenreActivity extends BaseActivity {
                         break;
                     case 1: // View Songs
                         viewPlaylistSongs(playlist);
+                        break;
+                    case 2: // Add Songs
+                        addSongsToPlaylist(playlist);
                         break;
                 }
             })
@@ -189,62 +163,38 @@ public class GenreActivity extends BaseActivity {
             @Override
             public void onSuccess(List<Song> songs) {
                 if (songs.isEmpty()) {
-                    Toast.makeText(GenreActivity.this, "No songs found in playlist", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PlaylistsActivity.this, "No songs found in playlist", Toast.LENGTH_SHORT).show();
                 } else {
                     // Redă playlist-ul
-                    MusicPlayerManager.getInstance().playSong(GenreActivity.this, songs, 0);
-                    Toast.makeText(GenreActivity.this, "Playing: " + playlist.getName(), Toast.LENGTH_SHORT).show();
+                    MusicPlayerManager.getInstance().playSong(PlaylistsActivity.this, songs, 0);
+                    Toast.makeText(PlaylistsActivity.this, "Playing: " + playlist.getName(), Toast.LENGTH_SHORT).show();
                     // Deschide player-ul
-                    startActivity(new Intent(GenreActivity.this, MainActivity.class));
+                    startActivity(new Intent(PlaylistsActivity.this, MainActivity.class));
                 }
             }
             
             @Override
             public void onError(String error) {
-                Toast.makeText(GenreActivity.this, error, Toast.LENGTH_SHORT).show();
+                Toast.makeText(PlaylistsActivity.this, error, Toast.LENGTH_SHORT).show();
             }
         });
     }
     
     private void viewPlaylistSongs(Playlist playlist) {
         // Deschide LibraryActivity cu ID-ul playlist-ului
-        Intent intent = new Intent(GenreActivity.this, LibraryActivity.class);
+        Intent intent = new Intent(PlaylistsActivity.this, LibraryActivity.class);
         intent.putExtra("PLAYLIST_ID", playlist.getId());
         intent.putExtra("PLAYLIST_NAME", playlist.getName());
         startActivity(intent);
     }
-
-    private class GenreAdapter extends BaseAdapter {
-        @Override
-        public int getCount() { return GENRE_NAMES.length; }
-        @Override
-        public Object getItem(int position) { return GENRE_NAMES[position]; }
-        @Override
-        public long getItemId(int position) { return position; }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = LayoutInflater.from(GenreActivity.this)
-                        .inflate(R.layout.item_genre, parent, false);
-            }
-
-            TextView tvName = convertView.findViewById(R.id.tvGenreName);
-            ImageView ivImage = convertView.findViewById(R.id.ivGenreImage);
-
-            tvName.setText(GENRE_NAMES[position]);
-
-            int resId = getResources().getIdentifier(
-                    GENRE_IMAGES[position], "drawable", getPackageName());
-
-            if (resId != 0) {
-                ivImage.setImageResource(resId);
-            } else {
-                ivImage.setImageResource(android.R.drawable.ic_menu_gallery);
-            }
-
-            return convertView;
-        }
+    
+    private void addSongsToPlaylist(Playlist playlist) {
+        // Deschide LibraryActivity cu modul de adăugare melodii
+        Intent intent = new Intent(PlaylistsActivity.this, LibraryActivity.class);
+        intent.putExtra("ADD_TO_PLAYLIST_MODE", true);
+        intent.putExtra("PLAYLIST_ID", playlist.getId());
+        intent.putExtra("PLAYLIST_NAME", playlist.getName());
+        startActivity(intent);
     }
     
     private class PlaylistAdapter extends BaseAdapter {
@@ -272,7 +222,7 @@ public class GenreActivity extends BaseActivity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
-                convertView = LayoutInflater.from(GenreActivity.this)
+                convertView = LayoutInflater.from(PlaylistsActivity.this)
                         .inflate(R.layout.item_playlist, parent, false);
             }
 
@@ -294,7 +244,7 @@ public class GenreActivity extends BaseActivity {
                 ivPlaylistImage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#1DB954")));
             }
 
-            // Ascunde butonul de delete în GenreActivity (doar pentru redare)
+            // Ascunde butonul de delete în PlaylistsActivity (doar pentru redare)
             btnDelete.setVisibility(View.GONE);
 
             return convertView;

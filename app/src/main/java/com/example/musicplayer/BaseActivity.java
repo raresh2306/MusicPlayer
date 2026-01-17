@@ -103,8 +103,8 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         if (navPlaylists != null) {
             navPlaylists.setOnClickListener(v -> {
-                if (!(this instanceof GenreActivity)) {
-                    startActivity(new Intent(this, GenreActivity.class));
+                if (!(this instanceof PlaylistsActivity)) {
+                    startActivity(new Intent(this, PlaylistsActivity.class));
                     overridePendingTransition(0, 0);
                 }
             });

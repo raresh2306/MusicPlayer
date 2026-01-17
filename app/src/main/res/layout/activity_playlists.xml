@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/main_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:paddingTop="40dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Playlists"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_text"
+            android:gravity="center"
+            android:layout_marginBottom="30dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="15dp">
+
+            <TextView
+                android:id="@+id/tvPlaylistsTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="My Playlists"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_text"/>
+
+            <Button
+                android:id="@+id/btnCreatePlaylist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+ New"
+                android:textSize="14sp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"/>
+
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/lvUserPlaylists"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="10dp"/>
+
+    </LinearLayout>
+
+    <include layout="@layout/view_mini_player" />
+
+    <include layout="@layout/view_bottom_nav" />
+
+</LinearLayout>

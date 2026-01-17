@@ -41,6 +41,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".PlaylistsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".LibraryActivity"
             android:exported="false" />
 
