@@ -1,29 +1,37 @@
-package com.example.musicplayer;
+package com.example.musicplayer.database;
 
-import java.io.Serializable;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
 
-public class Song implements Serializable {
-    private int resId; // Pentru melodiile locale din res/raw
+@Entity(tableName = "songs")
+public class SongEntity {
+    @PrimaryKey(autoGenerate = true)
+    private long id;
+    
+    private int resId; // 0 dacă e din cloud
     private String cloudUrl; // URL pentru melodiile din cloud
     private String title;
     private String artist;
     private String genre;
-    private boolean isCloudSong; // true dacă e din cloud, false dacă e local
+    private boolean isCloudSong; // true dacă e din cloud
     private String coverImageUrl; // URL pentru poza de cover (pentru melodiile cloud)
-
-    // Constructor pentru melodii locale
-    public Song(int resId, String title, String artist, String genre) {
+    
+    public SongEntity() {
+    }
+    
+    @Ignore
+    public SongEntity(int resId, String title, String artist, String genre) {
         this.resId = resId;
         this.title = title;
         this.artist = artist;
         this.genre = genre;
         this.isCloudSong = false;
         this.cloudUrl = null;
-        this.coverImageUrl = null;
     }
-
-    // Constructor pentru melodii cloud
-    public Song(String cloudUrl, String title, String artist, String genre) {
+    
+    @Ignore
+    public SongEntity(String cloudUrl, String title, String artist, String genre) {
         this.cloudUrl = cloudUrl;
         this.title = title;
         this.artist = artist;
@@ -33,8 +41,8 @@ public class Song implements Serializable {
         this.coverImageUrl = null;
     }
     
-    // Constructor pentru melodii cloud cu cover image
-    public Song(String cloudUrl, String title, String artist, String genre, String coverImageUrl) {
+    @Ignore
+    public SongEntity(String cloudUrl, String title, String artist, String genre, String coverImageUrl) {
         this.cloudUrl = cloudUrl;
         this.title = title;
         this.artist = artist;
@@ -43,13 +51,45 @@ public class Song implements Serializable {
         this.resId = 0;
         this.coverImageUrl = coverImageUrl;
     }
-
+    
+    public long getId() {
+        return id;
+    }
+    
+    public void setId(long id) {
+        this.id = id;
+    }
+    
     public int getResId() {
         return resId;
     }
-
+    
     public void setResId(int resId) {
         this.resId = resId;
+    }
+    
+    public String getTitle() {
+        return title;
+    }
+    
+    public void setTitle(String title) {
+        this.title = title;
+    }
+    
+    public String getArtist() {
+        return artist;
+    }
+    
+    public void setArtist(String artist) {
+        this.artist = artist;
+    }
+    
+    public String getGenre() {
+        return genre;
+    }
+    
+    public void setGenre(String genre) {
+        this.genre = genre;
     }
 
     public String getCloudUrl() {
@@ -58,30 +98,6 @@ public class Song implements Serializable {
 
     public void setCloudUrl(String cloudUrl) {
         this.cloudUrl = cloudUrl;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
-    public String getGenre() {
-        return genre;
-    }
-
-    public void setGenre(String genre) {
-        this.genre = genre;
     }
 
     public boolean isCloudSong() {

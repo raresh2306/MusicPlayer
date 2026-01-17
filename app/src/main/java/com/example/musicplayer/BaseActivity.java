@@ -10,6 +10,9 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
 public abstract class BaseActivity extends AppCompatActivity {
 
     // Keep a reference to the listener for the Mini Player
@@ -17,7 +20,18 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 1. Load Theme Preference
+        // 1. Check if user is logged in (except for LoginActivity and SignUpActivity)
+        String className = this.getClass().getSimpleName();
+        if (!className.equals("LoginActivity") && !className.equals("SignUpActivity")) {
+            SessionManager sessionManager = new SessionManager(this);
+            if (!sessionManager.isLoggedIn()) {
+                startActivity(new android.content.Intent(this, LoginActivity.class));
+                finish();
+                return;
+            }
+        }
+        
+        // 2. Load Theme Preference
         SharedPreferences prefs = getSharedPreferences("AppConfig", MODE_PRIVATE);
         boolean isDarkMode = prefs.getBoolean("DarkMode", false);
         AppCompatDelegate.setDefaultNightMode(isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
@@ -67,6 +81,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         View navSearch = findViewById(R.id.navSearch);
         View navPlaylists = findViewById(R.id.navPlaylists);
         View navTheme = findViewById(R.id.navTheme);
+        View navAccount = findViewById(R.id.navAccount);
 
         if (navHome != null) {
             navHome.setOnClickListener(v -> {
@@ -97,6 +112,15 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         if (navTheme != null) {
             navTheme.setOnClickListener(v -> toggleTheme());
+        }
+
+        if (navAccount != null) {
+            navAccount.setOnClickListener(v -> {
+                if (!(this instanceof ProfileActivity)) {
+                    startActivity(new Intent(this, ProfileActivity.class));
+                    overridePendingTransition(0, 0);
+                }
+            });
         }
     }
 
@@ -135,8 +159,21 @@ public abstract class BaseActivity extends AppCompatActivity {
         title.setText(currentSong.getTitle());
         artist.setText(currentSong.getArtist());
 
-        int resId = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
-        art.setImageResource(resId);
+        // Verifică dacă melodia are cover image din cloud
+        String coverImageUrl = currentSong.getCoverImageUrl();
+        if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+            // Încarcă imaginea din URL folosind Glide
+            Glide.with(this)
+                .load(coverImageUrl)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .placeholder(ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist()))
+                .error(ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist()))
+                .into(art);
+        } else {
+            // Folosește imaginea default bazată pe artist
+            int resId = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
+            art.setImageResource(resId);
+        }
 
         if (MusicPlayerManager.getInstance().isPlaying()) {
             btnPlayPause.setImageResource(android.R.drawable.ic_media_pause);

@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
         android:allowBackup="true"
@@ -16,7 +18,7 @@
         tools:targetApi="31">
 
         <activity
-            android:name=".HomeActivity"
+            android:name=".LoginActivity"
             android:exported="true"
             android:launchMode="singleTask">
             <intent-filter>
@@ -24,6 +26,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".SignUpActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".HomeActivity"
+            android:exported="false"
+            android:launchMode="singleTask" />
 
         <activity
             android:name=".GenreActivity"
@@ -42,6 +53,10 @@
             android:exported="false" />
 
         <activity android:name=".SearchActivity" />
+
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false" />
 
     </application>
 

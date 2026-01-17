@@ -12,6 +12,9 @@ public class HomeActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        // Initialize database with songs
+        MusicLibrary.initializeDatabase(this);
+
         Button btnLib = findViewById(R.id.btnGoLibrary);
         Button btnGen = findViewById(R.id.btnGoGenres);
 

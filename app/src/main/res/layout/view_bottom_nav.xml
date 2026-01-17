@@ -8,7 +8,7 @@
     android:orientation="horizontal"
     android:background="@color/bottom_nav_background"
     android:gravity="center_vertical"
-    android:weightSum="4">
+    android:weightSum="5">
 
     <LinearLayout
         android:id="@+id/navHome"
@@ -102,6 +102,30 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Theme"
+            android:textColor="@color/primary_text"
+            android:textSize="10sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/navAccount"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_account"
+            app:tint="@color/icon_tint_inverse"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Account"
             android:textColor="@color/primary_text"
             android:textSize="10sp"/>
     </LinearLayout>

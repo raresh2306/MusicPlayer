@@ -29,7 +29,7 @@ public class SearchActivity extends BaseActivity {
         EditText etSearch = findViewById(R.id.etSearch);
         ListView lvResults = findViewById(R.id.lvSearchResults);
 
-        allSongs = MusicLibrary.getSongList();
+        allSongs = MusicLibrary.getSongList(this);
 
         // CHANGED: Start with an EMPTY list (Cleaner look)
         filteredSongs = new ArrayList<>();

@@ -2,6 +2,8 @@ package com.example.musicplayer;
 
 import android.content.Context;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack; // Import Stack
@@ -54,16 +56,47 @@ public class MusicPlayerManager {
         if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.release();
+            mediaPlayer = null;
         }
 
         if (currentPlaylist.isEmpty()) return;
 
         Song song = currentPlaylist.get(currentIndex);
 
-        // REVERTED: Standard resource playback only (No Audio URI)
-        mediaPlayer = MediaPlayer.create(context, song.getResId());
+        try {
+            mediaPlayer = new MediaPlayer();
+            
+            if (song.isCloudSong() && song.getCloudUrl() != null) {
+                // Redă din cloud (streaming)
+                mediaPlayer.setDataSource(song.getCloudUrl());
+                mediaPlayer.prepareAsync();
+                mediaPlayer.setOnPreparedListener(mp -> {
+                    mp.start();
+                    notifyUI();
+                });
+                mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                    // Dacă eșuează streaming-ul, încearcă să redă local dacă există resId
+                    if (song.getResId() != 0) {
+                        try {
+                            mp.reset();
+                            mp.setDataSource(context, Uri.parse("android.resource://" + context.getPackageName() + "/" + song.getResId()));
+                            mp.prepare();
+                            mp.start();
+                            notifyUI();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    return true;
+                });
+            } else {
+                // Redă din resurse locale
+                mediaPlayer.setDataSource(context, Uri.parse("android.resource://" + context.getPackageName() + "/" + song.getResId()));
+                mediaPlayer.prepare();
+                mediaPlayer.start();
+                notifyUI();
+            }
 
-        if (mediaPlayer != null) {
             mediaPlayer.setOnCompletionListener(mp -> {
                 if (isRepeat) {
                     playCurrentSong(context);
@@ -72,8 +105,9 @@ public class MusicPlayerManager {
                 }
             });
 
-            mediaPlayer.start();
-            notifyUI();
+        } catch (IOException e) {
+            e.printStackTrace();
+            mediaPlayer = null;
         }
     }
 
@@ -137,5 +171,19 @@ public class MusicPlayerManager {
         if (currentPlaylist.isEmpty() || currentIndex < 0 || currentIndex >= currentPlaylist.size()) return null;
         return currentPlaylist.get(currentIndex);
     }
+    
+    public void stop() {
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+            }
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+        currentPlaylist.clear();
+        currentIndex = 0;
+        notifyUI();
+    }
+    
     public MediaPlayer getMediaPlayer() { return mediaPlayer; }
 }

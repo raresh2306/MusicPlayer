@@ -38,7 +38,7 @@ public class ArtistActivity extends BaseActivity {
         int artistImageRes = ArtistImageHelper.getArtistImageResource(this, currentArtistName);
         ivArtistImage.setImageResource(artistImageRes);
 
-        artistSongs = MusicLibrary.getSongsByArtist(currentArtistName);
+        artistSongs = MusicLibrary.getSongsByArtist(this, currentArtistName);
 
         SongAdapter adapter = new SongAdapter(artistSongs);
         lvArtistSongs.setAdapter(adapter);

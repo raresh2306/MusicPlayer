@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/main_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Profile Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:layout_marginBottom="30dp">
+
+            <ImageView
+                android:id="@+id/ivProfilePicture"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/ic_account"
+                android:background="@drawable/ic_account"
+                android:scaleType="centerCrop"
+                android:contentDescription="Profile Picture"
+                android:clickable="true"
+                android:focusable="true"
+                android:backgroundTint="#CCCCCC"
+                android:padding="20dp"/>
+
+            <TextView
+                android:id="@+id/tvUsername"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Username"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_text"
+                android:layout_marginTop="15dp"/>
+
+            <TextView
+                android:id="@+id/tvEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="email@example.com"
+                android:textSize="14sp"
+                android:textColor="@color/primary_text"
+                android:layout_marginTop="5dp"/>
+
+            <Button
+                android:id="@+id/btnChangeProfilePicture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Change Picture"
+                android:textSize="12sp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#1DB954"
+                android:textColor="#FFFFFF"/>
+        </LinearLayout>
+
+        <!-- Change Password Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="15dp"
+            android:background="@color/bottom_nav_background"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Password"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_text"
+                android:layout_marginBottom="10dp"/>
+
+            <Button
+                android:id="@+id/btnChangePassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Change Password"
+                android:backgroundTint="#000000"
+                android:textColor="#FFFFFF"/>
+        </LinearLayout>
+
+        <!-- Playlists Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="15dp"
+            android:background="@color/bottom_nav_background"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="15dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="My Playlists"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_text"/>
+
+                <Button
+                    android:id="@+id/btnCreatePlaylist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+ New"
+                    android:textSize="14sp"
+                    android:backgroundTint="#1DB954"
+                    android:textColor="#FFFFFF"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"/>
+            </LinearLayout>
+
+            <ListView
+                android:id="@+id/lvPlaylists"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@android:color/transparent"
+                android:dividerHeight="10dp"/>
+        </LinearLayout>
+
+        <!-- Cloud Songs Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="15dp"
+            android:background="@color/bottom_nav_background"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cloud Songs"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_text"
+                android:layout_marginBottom="15dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Add songs from cloud storage (Google Drive, Dropbox, etc.)"
+                android:textSize="12sp"
+                android:textColor="@color/secondary_text"
+                android:layout_marginBottom="15dp"/>
+
+            <Button
+                android:id="@+id/btnAddCloudSong"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="+ Add Cloud Song"
+                android:textSize="14sp"
+                android:backgroundTint="#1DB954"
+                android:textColor="#FFFFFF"/>
+        </LinearLayout>
+
+        <!-- Logout Button -->
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:textSize="16sp"
+            android:backgroundTint="#FF0000"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="20dp"/>
+
+    </LinearLayout>
+
+</ScrollView>

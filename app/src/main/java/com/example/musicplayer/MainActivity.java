@@ -5,11 +5,28 @@ import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,6 +35,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -25,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvSongTitle, tvArtist, tvCurrentTime, tvTotalTime;
     private ImageView albumArt;
     private SeekBar seekBar;
-    private ImageButton btnPlayPause, btnNext, btnPrev, btnShuffle, btnRepeat;
+    private ImageButton btnPlayPause, btnNext, btnPrev, btnShuffle, btnRepeat, btnAddToPlaylist, btnLike;
 
     private Handler handler = new Handler();
     private Runnable updateSeekBarRunnable;
@@ -99,6 +119,8 @@ public class MainActivity extends AppCompatActivity {
         btnPrev = findViewById(R.id.btnPrev);
         btnShuffle = findViewById(R.id.btnShuffle);
         btnRepeat = findViewById(R.id.btnRepeat);
+        btnAddToPlaylist = findViewById(R.id.btnAddToPlaylist);
+        btnLike = findViewById(R.id.btnLike);
     }
 
     private void setupClickListeners() {
@@ -128,6 +150,150 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        btnAddToPlaylist.setOnClickListener(v -> {
+            Song current = MusicPlayerManager.getInstance().getCurrentSong();
+            if (current != null) {
+                showAddToPlaylistDialog(current);
+            } else {
+                Toast.makeText(this, "No song playing", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnLike.setOnClickListener(v -> {
+            Song current = MusicPlayerManager.getInstance().getCurrentSong();
+            if (current != null) {
+                toggleLikeSong(current);
+            } else {
+                Toast.makeText(this, "No song playing", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    
+    private void showAddToPlaylistDialog(Song song) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+            FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        
+        if (userId == null) {
+            Toast.makeText(this, "Please login to add songs to playlists", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("playlists")
+            .whereEqualTo("userId", userId)
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    List<Playlist> playlists = new ArrayList<>();
+                    List<String> playlistNames = new ArrayList<>();
+                    
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        Playlist playlist = new Playlist();
+                        playlist.setId(document.getId());
+                        playlist.setName(document.getString("name"));
+                        playlist.setUserId(document.getString("userId"));
+                        
+                        @SuppressWarnings("unchecked")
+                        List<String> songIds = (List<String>) document.get("songIds");
+                        if (songIds != null) {
+                            playlist.setSongIds(songIds);
+                        }
+                        
+                        playlists.add(playlist);
+                        playlistNames.add(playlist.getName());
+                    }
+                    
+                    if (playlists.isEmpty()) {
+                        Toast.makeText(this, "No playlists found. Create one in your profile!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    
+                    String[] playlistArray = playlistNames.toArray(new String[0]);
+                    
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Add to Playlist")
+                        .setItems(playlistArray, (dialog, which) -> {
+                            Playlist selectedPlaylist = playlists.get(which);
+                            addSongToPlaylist(selectedPlaylist, song);
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+                } else {
+                    Toast.makeText(this, "Failed to load playlists", Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+    
+    private void addSongToPlaylist(Playlist playlist, Song song) {
+        if (playlist.getId() == null) return;
+        
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        
+        if (song.isCloudSong()) {
+            // Pentru melodiile cloud
+            String userId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+                FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+            
+            if (userId == null) {
+                Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Obține ID-ul melodiei cloud din Firestore
+            db.collection("cloud_songs")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("cloudUrl", song.getCloudUrl())
+                .limit(1)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                        String cloudSongId = task.getResult().getDocuments().get(0).getId();
+                        List<String> cloudSongIds = new ArrayList<>(playlist.getCloudSongIds());
+                        
+                        if (cloudSongIds.contains(cloudSongId)) {
+                            Toast.makeText(MainActivity.this, "Song already in playlist", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        
+                        cloudSongIds.add(cloudSongId);
+                        
+                        db.collection("playlists").document(playlist.getId())
+                            .update("cloudSongIds", cloudSongIds)
+                            .addOnCompleteListener(updateTask -> {
+                                if (updateTask.isSuccessful()) {
+                                    Toast.makeText(MainActivity.this, "Added to " + playlist.getName(), Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "Failed to add song to playlist", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                    } else {
+                        Toast.makeText(MainActivity.this, "Cloud song not found", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        } else {
+            // Pentru melodiile locale
+            String songId = String.valueOf(song.getResId());
+            List<String> songIds = new ArrayList<>(playlist.getSongIds());
+            
+            // Verifică dacă melodia nu este deja în playlist
+            if (songIds.contains(songId)) {
+                Toast.makeText(this, "Song already in playlist", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            songIds.add(songId);
+            
+            db.collection("playlists").document(playlist.getId())
+                .update("songIds", songIds)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this, "Added to " + playlist.getName(), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Failed to add song to playlist", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        }
     }
 
     private void setupSeekBar() {
@@ -157,9 +323,25 @@ public class MainActivity extends AppCompatActivity {
 
         tvSongTitle.setText(currentSong.getTitle());
         tvArtist.setText(currentSong.getArtist());
+        
+        // Actualizează starea butonului de like
+        updateLikeButton(currentSong);
 
-        int resId = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
-        albumArt.setImageResource(resId);
+        // Verifică dacă melodia are cover image din cloud
+        String coverImageUrl = currentSong.getCoverImageUrl();
+        if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+            // Încarcă imaginea din URL folosind Glide
+            Glide.with(this)
+                .load(coverImageUrl)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .placeholder(ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist()))
+                .error(ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist()))
+                .into(albumArt);
+        } else {
+            // Folosește imaginea default bazată pe artist
+            int resId = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
+            albumArt.setImageResource(resId);
+        }
 
         updatePlayPauseButton();
 
@@ -202,5 +384,52 @@ public class MainActivity extends AppCompatActivity {
         int seconds = (millis / 1000) % 60;
         int minutes = (millis / 1000) / 60;
         return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds);
+    }
+    
+    private void toggleLikeSong(Song song) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+            FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        
+        if (userId == null) {
+            Toast.makeText(this, "Please login to like songs", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        LikedSongsHelper.toggleLikeSong(this, song, new LikedSongsHelper.OnLikeToggled() {
+            @Override
+            public void onToggled(boolean isLiked, String message) {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                updateLikeButton(song);
+            }
+            
+            @Override
+            public void onError(String error) {
+                Toast.makeText(MainActivity.this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    
+    private void updateLikeButton(Song song) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+            FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        
+        if (userId == null || song == null) {
+            btnLike.setImageResource(R.drawable.ic_heart);
+            btnLike.setAlpha(0.5f);
+            return;
+        }
+        
+        LikedSongsHelper.checkIfLiked(userId, song, new LikedSongsHelper.OnLikeStatusChecked() {
+            @Override
+            public void onChecked(boolean isLiked) {
+                if (isLiked) {
+                    btnLike.setImageResource(R.drawable.ic_heart_filled);
+                    btnLike.setAlpha(1.0f);
+                } else {
+                    btnLike.setImageResource(R.drawable.ic_heart);
+                    btnLike.setAlpha(0.7f);
+                }
+            }
+        });
     }
 }

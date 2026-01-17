@@ -141,7 +141,36 @@
             app:tint="@color/icon_tint"
             android:scaleType="fitCenter"
             android:alpha="0.5"
+            android:layout_marginStart="10dp"
             android:contentDescription="Repeat" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="20dp">
+
+        <ImageButton
+            android:id="@+id/btnLike"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_heart"
+            app:tint="@color/icon_tint"
+            android:layout_marginEnd="15dp"
+            android:contentDescription="Like Song" />
+
+        <ImageButton
+            android:id="@+id/btnAddToPlaylist"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_add"
+            app:tint="@color/icon_tint"
+            android:contentDescription="Add to Playlist" />
 
     </LinearLayout>
 
