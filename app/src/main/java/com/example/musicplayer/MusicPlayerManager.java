@@ -6,7 +6,7 @@ import android.net.Uri;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack; // Import Stack
+import java.util.Stack;
 
 public class MusicPlayerManager {
 
@@ -17,8 +17,6 @@ public class MusicPlayerManager {
     private boolean isShuffle = false;
     private boolean isRepeat = false;
     private List<Runnable> listeners = new ArrayList<>();
-
-    // History Stack to remember played songs
     private Stack<Integer> songHistory = new Stack<>();
 
     private MusicPlayerManager() {}
@@ -37,11 +35,9 @@ public class MusicPlayerManager {
     }
 
     public void playSong(Context context, List<Song> songs, int index) {
-        // If we are switching to a completely new playlist, clear history
         if (!songs.equals(currentPlaylist)) {
             songHistory.clear();
         } else {
-            // If just jumping around same list, save current spot before moving
             if (!currentPlaylist.isEmpty()) {
                 songHistory.push(currentIndex);
             }
@@ -65,9 +61,8 @@ public class MusicPlayerManager {
 
         try {
             mediaPlayer = new MediaPlayer();
-            
+
             if (song.isCloudSong() && song.getCloudUrl() != null) {
-                // Redă din cloud (streaming)
                 mediaPlayer.setDataSource(song.getCloudUrl());
                 mediaPlayer.prepareAsync();
                 mediaPlayer.setOnPreparedListener(mp -> {
@@ -75,7 +70,6 @@ public class MusicPlayerManager {
                     notifyUI();
                 });
                 mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-                    // Dacă eșuează streaming-ul, încearcă să redă local dacă există resId
                     if (song.getResId() != 0) {
                         try {
                             mp.reset();
@@ -90,7 +84,6 @@ public class MusicPlayerManager {
                     return true;
                 });
             } else {
-                // Redă din resurse locale
                 mediaPlayer.setDataSource(context, Uri.parse("android.resource://" + context.getPackageName() + "/" + song.getResId()));
                 mediaPlayer.prepare();
                 mediaPlayer.start();
@@ -105,7 +98,7 @@ public class MusicPlayerManager {
                 }
             });
 
-        } catch (IOException e) {
+        } catch (Exception e) { // Catch general pentru orice eroare
             e.printStackTrace();
             mediaPlayer = null;
         }
@@ -121,15 +114,11 @@ public class MusicPlayerManager {
 
     public void playNext(Context context) {
         if (currentPlaylist.isEmpty()) return;
-
-        // Save current song to history before leaving
         songHistory.push(currentIndex);
 
         if (isShuffle) {
-            // Pick a random index
             currentIndex = (int) (Math.random() * currentPlaylist.size());
         } else {
-            // Go to next linearly
             currentIndex = (currentIndex + 1) % currentPlaylist.size();
         }
         playCurrentSong(context);
@@ -138,17 +127,14 @@ public class MusicPlayerManager {
     public void playPrevious(Context context) {
         if (currentPlaylist.isEmpty()) return;
 
-        // 1. RESTART LOGIC: If played > 5 seconds, restart song
         if (mediaPlayer != null && mediaPlayer.getCurrentPosition() > 5000) {
             mediaPlayer.seekTo(0);
             return;
         }
 
-        // 2. HISTORY LOGIC: Go back to the specific song previously played
         if (!songHistory.isEmpty()) {
             currentIndex = songHistory.pop();
         } else {
-            // Fallback (Linear previous) if no history exists
             currentIndex = (currentIndex - 1 + currentPlaylist.size()) % currentPlaylist.size();
         }
 
@@ -171,7 +157,7 @@ public class MusicPlayerManager {
         if (currentPlaylist.isEmpty() || currentIndex < 0 || currentIndex >= currentPlaylist.size()) return null;
         return currentPlaylist.get(currentIndex);
     }
-    
+
     public void stop() {
         if (mediaPlayer != null) {
             if (mediaPlayer.isPlaying()) {
@@ -184,6 +170,6 @@ public class MusicPlayerManager {
         currentIndex = 0;
         notifyUI();
     }
-    
+
     public MediaPlayer getMediaPlayer() { return mediaPlayer; }
 }

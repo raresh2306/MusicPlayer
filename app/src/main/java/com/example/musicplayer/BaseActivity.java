@@ -15,12 +15,10 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 public abstract class BaseActivity extends AppCompatActivity {
 
-    // Keep a reference to the listener for the Mini Player
     private final Runnable miniPlayerListener = this::updateMiniPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 1. Check if user is logged in (except for LoginActivity and SignUpActivity)
         String className = this.getClass().getSimpleName();
         if (!className.equals("LoginActivity") && !className.equals("SignUpActivity")) {
             SessionManager sessionManager = new SessionManager(this);
@@ -30,8 +28,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                 return;
             }
         }
-        
-        // 2. Load Theme Preference
+
         SharedPreferences prefs = getSharedPreferences("AppConfig", MODE_PRIVATE);
         boolean isDarkMode = prefs.getBoolean("DarkMode", false);
         AppCompatDelegate.setDefaultNightMode(isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
@@ -42,16 +39,13 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Update immediately
         updateMiniPlayer();
-        // Start listening for changes (Instant Pop-up Fix)
         MusicPlayerManager.getInstance().addSongChangedListener(miniPlayerListener);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // Stop listening when we leave the screen
         MusicPlayerManager.getInstance().removeSongChangedListener(miniPlayerListener);
     }
 
@@ -59,21 +53,19 @@ public abstract class BaseActivity extends AppCompatActivity {
         View miniPlayer = findViewById(R.id.miniPlayerContainer);
         if (miniPlayer == null) return;
 
-        // Click on bar opens Main Player
         miniPlayer.setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
-            // NEW: Add Fade In Transition here!
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
 
-        // Play/Pause button logic
         ImageButton btnPlayPause = findViewById(R.id.btnMiniPlayPause);
-        btnPlayPause.setOnClickListener(v -> {
-            MusicPlayerManager.getInstance().togglePlayPause();
-            // Listener will handle the UI update automatically
-        });
+        if (btnPlayPause != null) {
+            btnPlayPause.setOnClickListener(v -> {
+                MusicPlayerManager.getInstance().togglePlayPause();
+            });
+        }
     }
 
     protected void setupBottomNavigation() {
@@ -128,14 +120,12 @@ public abstract class BaseActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("AppConfig", MODE_PRIVATE);
         boolean isDarkMode = prefs.getBoolean("DarkMode", false);
 
-        // Save new state
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean("DarkMode", !isDarkMode);
         editor.apply();
 
-        // Apply and Recreate
         AppCompatDelegate.setDefaultNightMode(!isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
-        recreate(); // Reloads the screen to apply colors
+        recreate();
     }
 
     private void updateMiniPlayer() {
@@ -149,36 +139,43 @@ public abstract class BaseActivity extends AppCompatActivity {
             return;
         }
 
-        miniPlayer.setVisibility(View.VISIBLE);
-
         TextView title = findViewById(R.id.tvMiniTitle);
         TextView artist = findViewById(R.id.tvMiniArtist);
         ImageView art = findViewById(R.id.ivMiniAlbumArt);
         ImageButton btnPlayPause = findViewById(R.id.btnMiniPlayPause);
 
-        title.setText(currentSong.getTitle());
-        artist.setText(currentSong.getArtist());
-
-        // Verifică dacă melodia are cover image din cloud
-        String coverImageUrl = currentSong.getCoverImageUrl();
-        if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
-            // Încarcă imaginea din URL folosind Glide
-            Glide.with(this)
-                .load(coverImageUrl)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .placeholder(ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist()))
-                .error(ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist()))
-                .into(art);
-        } else {
-            // Folosește imaginea default bazată pe artist
-            int resId = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
-            art.setImageResource(resId);
+        if (title == null || artist == null || art == null || btnPlayPause == null) {
+            miniPlayer.setVisibility(View.GONE);
+            return;
         }
 
-        if (MusicPlayerManager.getInstance().isPlaying()) {
-            btnPlayPause.setImageResource(android.R.drawable.ic_media_pause);
-        } else {
-            btnPlayPause.setImageResource(android.R.drawable.ic_media_play);
+        try {
+            miniPlayer.setVisibility(View.VISIBLE);
+            title.setText(currentSong.getTitle());
+            artist.setText(currentSong.getArtist());
+
+            String coverImageUrl = currentSong.getCoverImageUrl();
+            if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+                Glide.with(this)
+                        .load(coverImageUrl)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .placeholder(ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist()))
+                        .error(ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist()))
+                        .into(art);
+            } else {
+                int resId = ArtistImageHelper.getArtistImageResource(this, currentSong.getArtist());
+                art.setImageResource(resId);
+            }
+
+            if (MusicPlayerManager.getInstance().isPlaying()) {
+                btnPlayPause.setImageResource(android.R.drawable.ic_media_pause);
+            } else {
+                btnPlayPause.setImageResource(android.R.drawable.ic_media_play);
+            }
+        } catch (Exception e) {
+            // Dacă apare o eroare de UI, nu da crash, doar ascunde player-ul
+            e.printStackTrace();
+            miniPlayer.setVisibility(View.GONE);
         }
     }
 }

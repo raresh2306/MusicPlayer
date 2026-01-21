@@ -43,78 +43,74 @@ public class PlaylistsActivity extends BaseActivity {
         userPlaylists = new ArrayList<>();
 
         listViewPlaylists = findViewById(R.id.lvUserPlaylists);
-        
+
         TextView tvPlaylistsTitle = findViewById(R.id.tvPlaylistsTitle);
         if (tvPlaylistsTitle != null) {
             tvPlaylistsTitle.setText("My Playlists");
         }
-        
+
         btnCreatePlaylist = findViewById(R.id.btnCreatePlaylist);
         if (btnCreatePlaylist != null) {
             btnCreatePlaylist.setOnClickListener(v -> showCreatePlaylistDialog());
         }
-        
+
         playlistAdapter = new PlaylistAdapter(userPlaylists);
         listViewPlaylists.setAdapter(playlistAdapter);
-        loadUserPlaylists();
-        
-        listViewPlaylists.setOnItemClickListener((parent, view, position, id) -> {
-            Playlist playlist = userPlaylists.get(position);
-            showPlaylistOptionsDialog(playlist);
-        });
 
+        loadUserPlaylists();
         setupMiniPlayer();
         setupBottomNavigation();
     }
-    
+
+    private void viewPlaylistSongs(Playlist playlist) {
+        Intent intent = new Intent(PlaylistsActivity.this, LibraryActivity.class);
+        intent.putExtra("PLAYLIST_ID", playlist.getId());
+        intent.putExtra("PLAYLIST_NAME", playlist.getName());
+        startActivity(intent);
+    }
+
     private void loadUserPlaylists() {
         String userId = sessionManager.getUserId();
         if (userId == null) return;
 
         db.collection("playlists")
-            .whereEqualTo("userId", userId)
-            .get()
-            .addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    userPlaylists.clear();
-                    boolean hasLikedSongs = false;
-                    
-                    for (QueryDocumentSnapshot document : task.getResult()) {
-                        Playlist playlist = new Playlist();
-                        playlist.setId(document.getId());
-                        playlist.setName(document.getString("name"));
-                        playlist.setUserId(document.getString("userId"));
-                        
-                        // Verifică dacă există deja "Liked Songs"
-                        if ("Liked Songs".equals(playlist.getName())) {
-                            hasLikedSongs = true;
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        userPlaylists.clear();
+                        boolean hasLikedSongs = false;
+
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Playlist playlist = new Playlist();
+                            playlist.setId(document.getId());
+                            playlist.setName(document.getString("name"));
+                            playlist.setUserId(document.getString("userId"));
+
+                            if ("Liked Songs".equals(playlist.getName())) {
+                                hasLikedSongs = true;
+                            }
+
+                            @SuppressWarnings("unchecked")
+                            List<String> songIds = (List<String>) document.get("songIds");
+                            if (songIds != null) playlist.setSongIds(songIds);
+
+                            @SuppressWarnings("unchecked")
+                            List<String> cloudSongIds = (List<String>) document.get("cloudSongIds");
+                            if (cloudSongIds != null) playlist.setCloudSongIds(cloudSongIds);
+
+                            userPlaylists.add(playlist);
                         }
-                        
-                        @SuppressWarnings("unchecked")
-                        List<String> songIds = (List<String>) document.get("songIds");
-                        if (songIds != null) {
-                            playlist.setSongIds(songIds);
+
+                        if (!hasLikedSongs) {
+                            createLikedSongsPlaylistIfNeeded(userId);
                         }
-                        
-                        @SuppressWarnings("unchecked")
-                        List<String> cloudSongIds = (List<String>) document.get("cloudSongIds");
-                        if (cloudSongIds != null) {
-                            playlist.setCloudSongIds(cloudSongIds);
-                        }
-                        
-                        userPlaylists.add(playlist);
+
+                        playlistAdapter.notifyDataSetChanged();
                     }
-                    
-                    // Dacă nu există "Liked Songs", îl creează automat
-                    if (!hasLikedSongs) {
-                        createLikedSongsPlaylistIfNeeded(userId);
-                    }
-                    
-                    playlistAdapter.notifyDataSetChanged();
-                }
-            });
+                });
     }
-    
+
     private void createLikedSongsPlaylistIfNeeded(String userId) {
         Map<String, Object> playlist = new HashMap<>();
         playlist.put("name", "Liked Songs");
@@ -122,81 +118,14 @@ public class PlaylistsActivity extends BaseActivity {
         playlist.put("songIds", new ArrayList<String>());
         playlist.put("cloudSongIds", new ArrayList<String>());
         playlist.put("createdAt", System.currentTimeMillis());
-        
+
         db.collection("playlists")
-            .add(playlist)
-            .addOnSuccessListener(documentReference -> {
-                // Reîncarcă playlist-urile după creare
-                loadUserPlaylists();
-            });
+                .add(playlist)
+                .addOnSuccessListener(documentReference -> {
+                    loadUserPlaylists();
+                });
     }
-    
-    private void showPlaylistOptionsDialog(Playlist playlist) {
-        String[] options = {"Play Playlist", "View Songs", "Add Songs"};
-        
-        new AlertDialog.Builder(this)
-            .setTitle(playlist.getName())
-            .setItems(options, (dialog, which) -> {
-                switch (which) {
-                    case 0: // Play Playlist
-                        playPlaylist(playlist);
-                        break;
-                    case 1: // View Songs
-                        viewPlaylistSongs(playlist);
-                        break;
-                    case 2: // Add Songs
-                        addSongsToPlaylist(playlist);
-                        break;
-                }
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
-    }
-    
-    private void playPlaylist(Playlist playlist) {
-        if (playlist.getSongCount() == 0) {
-            Toast.makeText(this, "Playlist is empty. Add some songs first!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        PlaylistHelper.getPlaylistSongs(this, playlist, new PlaylistHelper.OnPlaylistSongsLoaded() {
-            @Override
-            public void onSuccess(List<Song> songs) {
-                if (songs.isEmpty()) {
-                    Toast.makeText(PlaylistsActivity.this, "No songs found in playlist", Toast.LENGTH_SHORT).show();
-                } else {
-                    // Redă playlist-ul
-                    MusicPlayerManager.getInstance().playSong(PlaylistsActivity.this, songs, 0);
-                    Toast.makeText(PlaylistsActivity.this, "Playing: " + playlist.getName(), Toast.LENGTH_SHORT).show();
-                    // Deschide player-ul
-                    startActivity(new Intent(PlaylistsActivity.this, MainActivity.class));
-                }
-            }
-            
-            @Override
-            public void onError(String error) {
-                Toast.makeText(PlaylistsActivity.this, error, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-    
-    private void viewPlaylistSongs(Playlist playlist) {
-        // Deschide LibraryActivity cu ID-ul playlist-ului
-        Intent intent = new Intent(PlaylistsActivity.this, LibraryActivity.class);
-        intent.putExtra("PLAYLIST_ID", playlist.getId());
-        intent.putExtra("PLAYLIST_NAME", playlist.getName());
-        startActivity(intent);
-    }
-    
-    private void addSongsToPlaylist(Playlist playlist) {
-        // Deschide LibraryActivity cu modul de adăugare melodii
-        Intent intent = new Intent(PlaylistsActivity.this, LibraryActivity.class);
-        intent.putExtra("ADD_TO_PLAYLIST_MODE", true);
-        intent.putExtra("PLAYLIST_ID", playlist.getId());
-        intent.putExtra("PLAYLIST_NAME", playlist.getName());
-        startActivity(intent);
-    }
-    
+
     private class PlaylistAdapter extends BaseAdapter {
         private List<Playlist> playlists;
 
@@ -205,19 +134,11 @@ public class PlaylistsActivity extends BaseActivity {
         }
 
         @Override
-        public int getCount() {
-            return playlists.size();
-        }
-
+        public int getCount() { return playlists.size(); }
         @Override
-        public Object getItem(int position) {
-            return playlists.get(position);
-        }
-
+        public Object getItem(int position) { return playlists.get(position); }
         @Override
-        public long getItemId(int position) {
-            return position;
-        }
+        public long getItemId(int position) { return position; }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -235,32 +156,55 @@ public class PlaylistsActivity extends BaseActivity {
             tvName.setText(playlist.getName());
             tvCount.setText(playlist.getSongCount() + " songs");
 
-            // Setează imaginea default pentru "Liked Songs"
+            // AICI ESTE FIX-UL PENTRU CLICK
+            convertView.setOnClickListener(v -> {
+                viewPlaylistSongs(playlist);
+            });
+
             if ("Liked Songs".equals(playlist.getName())) {
                 ivPlaylistImage.setImageResource(R.drawable.ic_liked_songs);
-                ivPlaylistImage.setBackgroundTintList(null); // Elimină background tint pentru heart
+                ivPlaylistImage.setBackgroundTintList(null);
+                btnDelete.setVisibility(View.GONE);
             } else {
                 ivPlaylistImage.setImageResource(R.drawable.ic_playlist);
                 ivPlaylistImage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#1DB954")));
-            }
+                btnDelete.setVisibility(View.VISIBLE);
 
-            // Ascunde butonul de delete în PlaylistsActivity (doar pentru redare)
-            btnDelete.setVisibility(View.GONE);
+                btnDelete.setOnClickListener(v -> {
+                    new AlertDialog.Builder(PlaylistsActivity.this)
+                            .setTitle("Delete Playlist")
+                            .setMessage("Are you sure you want to delete \"" + playlist.getName() + "\"?")
+                            .setPositiveButton("Delete", (dialog, which) -> deletePlaylist(playlist))
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                });
+            }
 
             return convertView;
         }
     }
-    
+
+    private void deletePlaylist(Playlist playlist) {
+        if (playlist.getId() == null) return;
+        db.collection("playlists").document(playlist.getId())
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Playlist deleted", Toast.LENGTH_SHORT).show();
+                    loadUserPlaylists();
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Error deleting playlist", Toast.LENGTH_SHORT).show());
+    }
+
     private void showCreatePlaylistDialog() {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_playlist, null);
         TextInputEditText etPlaylistName = dialogView.findViewById(R.id.etPlaylistName);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
-            .setTitle("Create New Playlist")
-            .setView(dialogView)
-            .setPositiveButton("Create", null)
-            .setNegativeButton("Cancel", null)
-            .create();
+                .setTitle("Create New Playlist")
+                .setView(dialogView)
+                .setPositiveButton("Create", null)
+                .setNegativeButton("Cancel", null)
+                .create();
 
         dialog.setOnShowListener(dialogInterface -> {
             Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
@@ -270,15 +214,12 @@ public class PlaylistsActivity extends BaseActivity {
                     Toast.makeText(this, "Please enter a playlist name", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                
-                // Verifică dacă nu există deja un playlist cu același nume
                 for (Playlist p : userPlaylists) {
                     if (playlistName.equals(p.getName())) {
                         Toast.makeText(this, "A playlist with this name already exists", Toast.LENGTH_SHORT).show();
                         return;
                     }
                 }
-
                 createPlaylist(playlistName);
                 dialog.dismiss();
             });
@@ -286,14 +227,13 @@ public class PlaylistsActivity extends BaseActivity {
 
         dialog.show();
     }
-    
+
     private void createPlaylist(String name) {
         String userId = sessionManager.getUserId();
         if (userId == null) {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
-
         Map<String, Object> playlist = new HashMap<>();
         playlist.put("name", name);
         playlist.put("userId", userId);
@@ -302,13 +242,13 @@ public class PlaylistsActivity extends BaseActivity {
         playlist.put("createdAt", System.currentTimeMillis());
 
         db.collection("playlists")
-            .add(playlist)
-            .addOnSuccessListener(documentReference -> {
-                Toast.makeText(this, "Playlist created!", Toast.LENGTH_SHORT).show();
-                loadUserPlaylists(); // Reîncarcă lista
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(this, "Failed to create playlist: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
+                .add(playlist)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(this, "Playlist created!", Toast.LENGTH_SHORT).show();
+                    loadUserPlaylists();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to create playlist: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }

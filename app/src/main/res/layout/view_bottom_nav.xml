@@ -4,7 +4,7 @@
     android:id="@+id/bottomNav"
     android:layout_width="match_parent"
     android:layout_height="70dp"
-    android:paddingBottom="5dp"
+    android:paddingBottom="20dp"
     android:orientation="horizontal"
     android:background="@color/bottom_nav_background"
     android:gravity="center_vertical"
